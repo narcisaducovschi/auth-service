@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.database import Base, engine, get_db
 from app import models, schemas, crud, security
-from app.dependencies import get_current_user
+from app.dependencies import get_current_user , require_role
 
 Base.metadata.create_all(bind=engine)
 
@@ -76,3 +76,10 @@ def refresh_token(request: schemas.RefreshRequest, db: Session = Depends(get_db)
         access_token=new_access_token,
         refresh_token=new_refresh_token,
     )
+
+@app.get("/admin/users", response_model=list[schemas.UserResponse])
+def list_all_users(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_role(models.UserRole.ADMIN)),
+):
+    return db.query(models.User).all()

@@ -42,3 +42,14 @@ def get_current_user(
         )
 
     return user
+
+def require_role(required_role: models.UserRole):
+    def role_checker(current_user: models.User = Depends(get_current_user)) -> models.User:
+        if current_user.role != required_role:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN , 
+                detail= f'Se requiere {required_role} para acceder'
+            )
+        return current_user
+    return role_checker
+
