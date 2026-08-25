@@ -1,8 +1,8 @@
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 
 from app.database import Base, engine, get_db
-from app import models, schemas, crud, security
+from app import models, schemas, crud, security, rate_limit
 from app.dependencies import get_current_user , require_role
 
 Base.metadata.create_all(bind=engine)
@@ -18,9 +18,17 @@ def register(user_in: schemas.UserCreate, db: Session = Depends(get_db)):
 
     return crud.create_user(db, user_in)
 
-
 @app.post("/auth/login", response_model=schemas.TokenResponse)
-def login(credentials: schemas.UserLogin, db: Session = Depends(get_db)):
+def login(credentials: schemas.UserLogin, request: Request, db: Session = Depends(get_db)):
+    client_ip = request.client.host
+    allowed, remaining = rate_limit.check_rate_limit(client_ip)
+
+    if not allowed:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Demasiados intentos de inicio de sesión. Inténtalo de nuevo en un minuto.",
+        )
+
     user = crud.authenticate_user(db, credentials.email, credentials.password)
 
     if user is None:
@@ -34,6 +42,8 @@ def login(credentials: schemas.UserLogin, db: Session = Depends(get_db)):
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Esta cuenta está desactivada",
         )
+
+    rate_limit.reset_rate_limit(client_ip)
 
     access_token = security.create_access_token(str(user.id))
     refresh_token = security.create_refresh_token(str(user.id))
