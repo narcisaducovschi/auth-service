@@ -43,3 +43,36 @@ def login(credentials: schemas.UserLogin, db: Session = Depends(get_db)):
 @app.get("/me", response_model=schemas.UserResponse)
 def read_current_user(current_user: models.User = Depends(get_current_user)):
     return current_user
+
+@app.post("/auth/refresh", response_model=schemas.TokenResponse)
+def refresh_token(request: schemas.RefreshRequest, db: Session = Depends(get_db)):
+    payload = security.decode_token(request.refresh_token)
+
+    if payload is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Refresh token inválido o expirado",
+        )
+
+    if payload.get("type") != "refresh":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token inválido: se esperaba un refresh token",
+        )
+
+    user_id = payload.get("sub")
+    user = crud.get_user_by_id(db, user_id)
+
+    if user is None or not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Usuario no encontrado o inactivo",
+        )
+
+    new_access_token = security.create_access_token(str(user.id))
+    new_refresh_token = security.create_refresh_token(str(user.id))
+
+    return schemas.TokenResponse(
+        access_token=new_access_token,
+        refresh_token=new_refresh_token,
+    )
