@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.database import Base, engine, get_db
 from app import models, schemas, crud, security
+from app.dependencies import get_current_user
 
 Base.metadata.create_all(bind=engine)
 
@@ -38,3 +39,7 @@ def login(credentials: schemas.UserLogin, db: Session = Depends(get_db)):
     refresh_token = security.create_refresh_token(str(user.id))
 
     return schemas.TokenResponse(access_token=access_token, refresh_token=refresh_token)
+
+@app.get("/me", response_model=schemas.UserResponse)
+def read_current_user(current_user: models.User = Depends(get_current_user)):
+    return current_user
