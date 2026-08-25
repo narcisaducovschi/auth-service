@@ -93,3 +93,28 @@ def list_all_users(
     current_user: models.User = Depends(require_role(models.UserRole.ADMIN)),
 ):
     return db.query(models.User).all()
+
+@app.post("/auth/forgot-password")
+def forgot_password(request: schemas.ForgotPasswordRequest, db: Session = Depends(get_db)):
+    user = crud.get_user_by_email(db, request.email)
+
+    if user is not None:
+        reset_token = crud.create_password_reset_token(db, user.id)
+        print(f"[DEV] Token de recuperación para {user.email}: {reset_token.token}")
+
+    return {"message": "Si el email existe, se ha enviado un enlace de recuperación"}
+
+
+@app.post("/auth/reset-password")
+def reset_password(request: schemas.ResetPasswordRequest, db: Session = Depends(get_db)):
+    reset_token = crud.get_valid_reset_token(db, request.token)
+
+    if reset_token is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Token inválido o expirado",
+        )
+
+    crud.reset_user_password(db, reset_token, request.new_password)
+
+    return {"message": "Contraseña actualizada correctamente"}
