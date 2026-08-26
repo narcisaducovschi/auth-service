@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Auth Service</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="card">
+        <h1 id="form-title">Iniciar sesión</h1>
+
+        <form id="login-form">
+            <input type="email" id="login-email" placeholder="Email" required>
+            <input type="password" id="login-password" placeholder="Contraseña" required>
+            <button type="submit">Entrar</button>
+        </form>
+
+
+        <form id="register-form" style="display: none;">
+            <input type="email" id="register-email" placeholder="Email" required>
+            <input type="password" id="register-password" placeholder="Contraseña (mín. 8 caracteres)" required>
+            <button type="submit">Registrarse</button>
+        </form>
+
+
+        <form id="forgot-form" style="display: none;">
+            <input type="email" id="forgot-email" placeholder="Tu email" required>
+            <button type="submit">Enviar enlace de recuperación</button>
+        </form>
+
+        <div id="message"></div>
+
+        <div class="toggle-link" id="toggle-register">¿No tienes cuenta? Regístrate</div>
+        <div class="toggle-link" id="toggle-forgot">¿Olvidaste tu contraseña?</div>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

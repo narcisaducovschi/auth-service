@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Depends, HTTPException, status, Request
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 
 from app.database import Base, engine, get_db
@@ -8,6 +9,8 @@ from app.dependencies import get_current_user , require_role
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Auth Service")
+
+app.mount('/static' , StaticFiles(directory='app/static') , name = 'static')
 
 
 @app.post("/auth/register", response_model=schemas.UserResponse, status_code=201)
