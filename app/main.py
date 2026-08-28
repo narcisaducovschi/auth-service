@@ -48,7 +48,7 @@ def login(credentials: schemas.UserLogin, request: Request, db: Session = Depend
 
     rate_limit.reset_rate_limit(client_ip)
 
-    access_token = security.create_access_token(str(user.id))
+    access_token = security.create_access_token(str(user.id), user.email)
     refresh_token = security.create_refresh_token(str(user.id))
 
     return schemas.TokenResponse(access_token=access_token, refresh_token=refresh_token)
