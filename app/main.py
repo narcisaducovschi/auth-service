@@ -5,13 +5,22 @@ from sqlalchemy.orm import Session
 from app.database import Base, engine, get_db
 from app import models, schemas, crud, security, rate_limit
 from app.dependencies import get_current_user , require_role
+from fastapi.middleware.cors import CORSMiddleware
+
+
 
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Auth Service")
 
 app.mount('/static' , StaticFiles(directory='app/static') , name = 'static')
-
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:8001"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.post("/auth/register", response_model=schemas.UserResponse, status_code=201)
 def register(user_in: schemas.UserCreate, db: Session = Depends(get_db)):
